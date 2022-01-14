@@ -15,7 +15,7 @@ class ImagesController{
 			       	images_list = images;
 			    })
 		}else{
-	        images_list = {success: false, message: 'Error'};
+	        images_list = {success: false, message: 'Error, no filedata provided!'};
 	    }
 	    return images_list;
 	}
