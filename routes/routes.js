@@ -22,20 +22,19 @@ const upload = multer({ storage: storage })
 //Get Products
 router.get('/api/v2/products',async (req,res)=>{
 	const page = req.query.page || 1;
-	const products = await productsController.getProductsAPI(page).then((response)=>{
+	await productsController.getProductsAPI(page).then((response)=>{
 		res.json(response);
 	});
 });
 
 // Create new product
-router.post('/api/v2/products',(req,res)=>{
+router.post('/api/v2/products',async (req,res)=>{
 	const data = req.body;
-	productsController.createProductAPI(data).then((created)=>{
-		if(created == true){
-			res.redirect('/api/v2/products')
-		}else{
-			res.status(400).json({success: false, message: 'Post validation falied, check datas and try again'})
-		}
+	await productsController.createProductAPI(data).then((response)=>{
+		  if(!response.success){
+		  	res.status(400);
+		  }
+			res.json(response);
 	});
 });
 
@@ -53,12 +52,9 @@ router.put('/api/v2/product/:id',async (req,res)=>{
 		'id' : req.params.id,
 		'data' : req.body
 	}
-	productsController.updateProductById(config).then((prod)=>{
-		if(prod.length){
-			res.json(prod);
-		}else{
-			res.status(400).json({success: false, message: 'Post validation falied, check datas and try again'})
-		}
+	productsController.updateProductById(config).then((response)=>{
+		if(!response.success) res.status(400);
+		res.json(response);
 	})
 });
 //Delete product

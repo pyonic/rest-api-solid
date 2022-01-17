@@ -16,6 +16,7 @@ const schema = {
 class ProductsController {
 	async createProductAPI(data){
 		const result = Joi.validate(data, schema);
+		let product_id = 0;
 		try{
 			if(result.error === null){
 				const { name, price,quantity } = data
@@ -23,13 +24,15 @@ class ProductsController {
 					name: name,
 					price:price,
 					quantity: quantity,
+				}).returning('id').then((id)=>{
+					product_id = id;
 				});
-				return true
+				return {success:true,'product_id': product_id};
 			}else{
-				return result.error;
+				return {success:false,'error': result.error};
 			}
 		}catch(err){
-			return err;
+			return {success:false,'error': err};
 		}
 	}
 	//Return list of products
@@ -72,7 +75,7 @@ class ProductsController {
 		const id = config.id;
 		// console.log(name,price,quantity,config.id);
 		const result = Joi.validate(config.data, schema);
-		let updated_product = [];
+		let updated_product = {};
 		try{
 			if(result.error == null){
 				await db('products').where('id',id).update({
@@ -81,25 +84,30 @@ class ProductsController {
 					quantity: quantity
 				})
 				await db.select('*').from('products').where('id',id).then((product)=>{
-					updated_product = product;
+					updated_product =  {success:true, product: product};
 				})
 			}else{
-				updated_product = []
+				updated_product = {success:false, product: null, message: result.error}
 			}
 		}catch(err){
-			return [];
+			updated_product = {success:false, product: null, message: err}
 		}
 		return updated_product;
 	}
 	//Delete product
 	async deleteProduct(id){
-		const status = {success: true, message: 'Product deleted'};
+		let status = {success: true, message: 'Product removed successfuly'};
 		console.log(id);
 		//Deleting all related images to product
-		await db('images').where('parent_id', id).del();
+		await db('images').where('parent_id', id).del().catch(err=>{
+			status = {success: false, message: err};
+		});
 		//Deleting product
-		await db('products').where('id', id).del();
-		return  status;
+		await db('products').where('id', id).del().catch(err=>{
+			status = {success: false, message: err};
+		});
+		
+		return status;
 	}
 } 
 
